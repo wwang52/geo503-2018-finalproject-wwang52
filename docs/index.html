@@ -312,15 +312,20 @@ div.tocify {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>The accessibility of public education is always an important things for people. In New York state, there are 61 public universities or colleges for high education. However, when presenting them on the map, we found that in some areas, there a several clustered schools together, while in some other areas, the nearest university or college are too far away. This means that peopel living in some areas of New York state have an inaccessibity on high education. Lack of necessary will be a big social problem for local residents, and if the government have budget to build a new one, it will be important to cover those in need. Since it can be a p-median problem, we can use a package called tbart to solve such kind of location analysis problem.</p>
+<p>The accessibility of public education is always an important things for people. In New York state, there are 61 public universities or colleges for high education. However, when presenting them on the map, we found that in some areas, there a several clustered schools together, while in some other areas, the nearest university or college are too far away. This means that peopel living in some areas of New York state have an inaccessibity on high education. Lack of necessary will be a big social problem for local residents, and if the government have budget to build a new one, it will be important to cover those in need. Since it can be a p-median problem, we can use a package called tbart to solve such kind of location analysis problem.<br />
+And here are two pictures by using IDW and Kriging, showing the public high educational level in the whole state.</p>
+<div class="figure">
+<img src="data/IDW.jpg" />
+
 </div>
-<div id="materials-and-methods" class="section level1">
-<h1>Materials and methods</h1>
-<div id="materials" class="section level2">
-<h2>Materials</h2>
-<p>There are two different kinds of data which is required in this project. The first one is the dataset of distribution of public universities and colleges. <a href="https://data.ny.gov/Education/City-University-of-New-York-CUNY-University-Campus/i5b5-imzn" class="uri">https://data.ny.gov/Education/City-University-of-New-York-CUNY-University-Campus/i5b5-imzn</a> Then I use Arcgis to do some work, make it into a shapefile.</p>
-<p>Another one is the basement map of New York State which contains population data of each county. <a href="https://gis.ny.gov/gisdata/inventories/details.cfm?DSID=1278" class="uri">https://gis.ny.gov/gisdata/inventories/details.cfm?DSID=1278</a></p>
+<div class="figure">
+<img src="data/Kriging.jpg" />
+
 </div>
+<p>From these two pictures, though there are some differences, we can find that at the north of the state, public university is lack. So if in the future, the state government want to build more community colleges, we have a rough guess about the potential sites to choose from.</p>
+</div>
+<div id="methods-and-data-preparation" class="section level1">
+<h1>methods and Data preparation</h1>
 <div id="methods" class="section level2">
 <h2>Methods</h2>
 <ul>
@@ -340,25 +345,11 @@ library(ggplot2)
 library(dplyr)
 library(tbart)</code></pre>
 <pre class="r"><code># load data
-schools &lt;- sf::st_read (&#39;data/school.shp&#39;)</code></pre>
-<pre><code>## Reading layer `school&#39; from data source `C:\Users\wangw\Desktop\geo503-2018-finalproject-wwang52\data\school.shp&#39; using driver `ESRI Shapefile&#39;
-## Simple feature collection with 61 features and 34 fields
-## geometry type:  POINT
-## dimension:      XY
-## bbox:           xmin: 143482.7 ymin: 4500399 xmax: 664150.5 ymax: 4950470
-## epsg (SRID):    26918
-## proj4string:    +proj=utm +zone=18 +datum=NAD83 +units=m +no_defs</code></pre>
-<pre class="r"><code>counties &lt;- sf::st_read (&#39;data/Counties.shp&#39;)</code></pre>
-<pre><code>## Reading layer `Counties&#39; from data source `C:\Users\wangw\Desktop\geo503-2018-finalproject-wwang52\data\Counties.shp&#39; using driver `ESRI Shapefile&#39;
-## Simple feature collection with 62 features and 14 fields
-## geometry type:  MULTIPOLYGON
-## dimension:      XY
-## bbox:           xmin: 105570.3 ymin: 4480951 xmax: 779932.1 ymax: 4985476
-## epsg (SRID):    26918
-## proj4string:    +proj=utm +zone=18 +datum=NAD83 +units=m +no_defs</code></pre>
+schools &lt;- sf::st_read (&#39;data/school.shp&#39;)
+population &lt;- sf::st_read (&#39;data/Cities_Towns.shp&#39;)</code></pre>
 <pre class="r"><code># data wrangling
 schools=schools%&gt;%mutate(total_students=Undergradu+Graduate_E)
-sf_population=st_as_sf(counties)
+sf_population=st_as_sf(population)
 sf_schools=st_as_sf(schools)</code></pre>
 </div>
 </div>
@@ -375,13 +366,38 @@ ggplot()+
   geom_sf(data=sf_schools,aes(colour=&#39;pink&#39;))+
   theme(legend.position = &#39;bottom&#39;)</code></pre>
 <p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<p>(still on working~)</p>
+<pre class="r"><code>#change sf data to sp data
+sp_population = as(population, &quot;Spatial&quot;)</code></pre>
+<pre class="r"><code>#find the towns/cities already covered
+covered = c(10,18,38,47,56,76,95,100,105,124,129,173,205,208,235,246,249,301,329,399,401,436,439,447,500,531,532,553,581,594,602,622,641,656,707,720,722,734,735,749,787,793,821,822,841,863,864,881,897,925,953,956,989)</code></pre>
+<pre class="r"><code>#solve p-median problem(take really long time)
+dist &lt;- matrix()
+universities = matrix()
+set.seed(12345)
+for (i in 1:11){
+  loc&lt;- allocations(sp_population,p=i+52,force = covered)
+  universities[i] = unique(loc$allocation)
+  dist[i] &lt;- sum(loc$allocdist) 
+}
+p &lt;- c(0:10)
+plot(p,dist)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>delta_dist &lt;- matrix()
+for (j in 1:10){
+delta_dist[j] = dist[j+1]-dist[j]
+}
+add &lt;- c(1:10)
+plot(add,delta_dist)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
 </div>
 <div id="conclusions" class="section level1">
 <h1>Conclusions</h1>
+<p>From the previous charts, we can find that when add one more community college, the best location is Franklinville, but the total weighted distance decrease least. However, after that if we add one more again, the best location is West Turin, and this time the total weighted distance decrease a lot. It is quite different from our pervious assumption that both of these two towns are located in the south-west of New York State, it’s obvious that the weight, population, plays a big role in our decision In p-median problem, we must put the weight in a significant place. Though p-median problem is a classic model in location analysis, it has some limitations, and it can be only a reference in the real decision. When the government decides to build new public facilities, it’s not only a geographic problem, but also a economic and social problem.</p>
 </div>
 <div id="references" class="section level1">
 <h1>References</h1>
+<p>The dataset of distribution of public universities and colleges. <a href="https://data.ny.gov/Education/City-University-of-New-York-CUNY-University-Campus/i5b5-imzn" class="uri">https://data.ny.gov/Education/City-University-of-New-York-CUNY-University-Campus/i5b5-imzn</a></p>
+<p>The basement map of New York State which contains population data of each county. <a href="https://gis.ny.gov/gisdata/inventories/details.cfm?DSID=1278" class="uri">https://gis.ny.gov/gisdata/inventories/details.cfm?DSID=1278</a></p>
 </div>
 
 <!-- give the footer some space -->
