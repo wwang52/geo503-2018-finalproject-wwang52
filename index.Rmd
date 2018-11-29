@@ -82,7 +82,7 @@ dist <- matrix()
 universities = matrix()
 set.seed(12345)
 for (i in 1:11){
-  loc<- allocations(sp_population,p=i+52,force = covered)
+  loc<- allocations(sp_population,metric = sp_population$POP2010*euc.dists(sp_population),p=i+52,force = covered)
   universities[i] = unique(loc$allocation)
   dist[i] <- sum(loc$allocdist) 
 }
@@ -99,13 +99,15 @@ plot(add,delta_dist)
 
 # Conclusions
 
-From the previous charts, we can find that when add one more community college, the best location is Franklinville, but the total weighted distance decrease least. However, after that if we add one more again, the best location is West Turin, and this time the total weighted distance decrease a lot. 
-It is quite different from our pervious assumption that both of these two towns are located in the south-west of New York State, it's obvious that the weight, population, plays a big role in our decision In p-median problem, we must put the weight in a significant place.
+From the previous charts, we can find that when add one more community college, the best location is Rochester, but the total weighted distance decrease least. However, after that if we add one more again, the best location is Islip, and this time the total weighted distance decrease a lot. 
+It is quite different from our pervious assumption that both of these two towns are not located in the north of New York State, it's obvious that the weight, population, plays a big role in our decision In p-median problem, we must put the weight in a significant place.
 Though p-median problem is a classic model in location analysis, it has some limitations, and it can be only a reference in the real decision. When the government decides to build new public facilities, it's not only a geographic problem, but also a economic and social problem.
 
 # References
 
-The dataset of distribution of public universities and colleges. https://data.ny.gov/Education/City-University-of-New-York-CUNY-University-Campus/i5b5-imzn
+The dataset of distribution of public universities and colleges.
+https://data.ny.gov/Education/City-University-of-New-York-CUNY-University-Campus/i5b5-imzn
 
-The basement map of New York State which contains population data of each county. https://gis.ny.gov/gisdata/inventories/details.cfm?DSID=1278
+The basement map of New York State which contains population data of each county.
+https://gis.ny.gov/gisdata/inventories/details.cfm?DSID=1278
 
